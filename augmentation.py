@@ -83,8 +83,8 @@ def process_directory(input_path, output_path, color=False, rot=False, clar=Fals
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Image data augmentation.")
   # Must-be argument
-  parser.add_argument("input_path", type=str, help="Input path of the image file.")
-  parser.add_argument("output_path", type=str, help="Output path for the processed image.")
+  parser.add_argument("input_path", type=str, help="Input directory of the image file.")
+  parser.add_argument("output_path", type=str, help="Output directory for the processed image.")
   # Optional argument
   parser.add_argument("--color", action="store_true", help="Exchange color channels in the image.")
   parser.add_argument("--rotate", action="store_true", help="Apply rotate operations on the image.")
