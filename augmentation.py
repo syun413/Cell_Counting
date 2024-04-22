@@ -55,28 +55,36 @@ def mod_rotate(tif_path, xml_path, output_tif, output_xml):
     obj.find('bndbox').find('ymax').text = str(xmax)
   xml.write(output_xml)
 
-def mod_sharpen(tif_path, xml_path, output_tif, output_xml, factor):
-  # modify tif
-  with Image.open(tif_path) as image:
-    kernel_values = [
-            -1, -1, -1,
-            -1,  9, -1,
-            -1, -1, -1
-        ]
-    kernel = ImageFilter.Kernel((3,3), kernel_values, scale=1.0)
-    output_image = image.filter(kernel)
-    output_image.save(output_tif)
-  # modify xml
-  xml = ET.parse(xml_path)
-  xml.write(output_xml)
+# def mod_sharpen(tif_path, xml_path, output_tif, output_xml, mask):
+#   # modify tif
+#   with Image.open(tif_path) as image:
+#     kernel_values = [
+#             -1, -1, -1,
+#             -1,  9, -1,
+#             -1, -1, -1
+#         ]
+#     kernel = ImageFilter.Kernel((3,3), kernel_values, scale=1.0)
+#     output_image = image.filter(kernel)
+#     output_image.save(output_tif)
+#   # modify xml
+#   xml = ET.parse(xml_path)
+#   xml.write(output_xml)
 
-def mod_blur(tif_path, xml_path, output_tif, output_xml, factor):
+def mod_sharp(tif_path, xml_path, output_tif, output_xml, output_tif2, output_xml2):
   image = cv2.imread(tif_path, -1)
+  # blur
   output_image = cv2.GaussianBlur(image, (3, 3), sigmaX=0)
   cv2.imwrite(output_tif, output_image)
   # modify xml
   xml = ET.parse(xml_path)
   xml.write(output_xml)
+  # sharpen
+  # laplacian will enlarge noises, use unsharp mask instead
+  mask = np.subtract(image, output_image)
+  output_image2 = cv2.addWeighted(image, 1.1, mask, 0.1, 0)
+  cv2.imwrite(output_tif2, output_image2)
+  # modify xml
+  xml.write(output_xml2)
 
 def arg_color(tif_path, xml_path, output_path, file, idx):
   output_tif = os.path.join(output_path, file).replace('.tif', f"_{idx}.tif")
@@ -102,13 +110,13 @@ def arg_rot(tif_path, xml_path, output_path, file, idx):
 def arg_sharp(tif_path, xml_path, output_path, file, idx):
   output_tif = os.path.join(output_path, file).replace('.tif', f"_{idx}.tif")
   output_xml = output_tif.replace('.tif', '.xml')
-  mod_sharpen(tif_path, xml_path, output_tif, output_xml, 4)
+  # mask = mod_blur(tif_path, xml_path, output_tif, output_xml)
   output_tif2 = output_tif.replace(f"{idx}.tif", f"{idx+1}.tif")
   output_xml2 = output_tif2.replace('.tif', '.xml')
-  mod_blur(output_tif, output_xml, output_tif2, output_xml2, -2)
+  mod_sharp(tif_path, xml_path, output_tif, output_xml, output_tif2, output_xml2)
   return 2
 
-def process_directory(input_path, output_path, color=False, rot=False, sharp=False, idx=1):
+def process_directory(input_path, output_path, color=False, rot=False, sharp=False, all=False, idx=1):
   """
   Process all .tif under the input directory
   """
@@ -116,13 +124,14 @@ def process_directory(input_path, output_path, color=False, rot=False, sharp=Fal
     if file.endswith(".tif"):
       tif_path = os.path.join(input_path, file)
       xml_path = tif_path.replace('.tif', '.xml')
+      index = idx
       if os.path.exists(xml_path):
-        if(color):
-          idx += arg_color(tif_path, xml_path, output_path, file, idx)
-        if(rot):
-          idx += arg_rot(tif_path, xml_path, output_path, file, idx)
-        if(sharp):
-          idx += arg_sharp(tif_path, xml_path, output_path, file, idx)
+        if(color or all):
+          index += arg_color(tif_path, xml_path, output_path, file, index)
+        if(rot or all):
+          index += arg_rot(tif_path, xml_path, output_path, file, index)
+        if(sharp or all):
+          index += arg_sharp(tif_path, xml_path, output_path, file, index)
       else:
         print(f"No XML file found for {tif_path}")
 
@@ -137,9 +146,10 @@ if __name__ == "__main__":
   parser.add_argument("--color", action="store_true", help="Exchange color channels in the image.")
   parser.add_argument("--rotate", action="store_true", help="Apply rotate operations on the image.")
   parser.add_argument("--sharpen", action="store_true", help="Adjust the image's sharpness.")
+  parser.add_argument("--all", action="store_true", help="Apply color, rotate, and sharpen.")
   parser.add_argument("--index", type=int, help="The index that output filenames start from.")
 
   args = parser.parse_args()
   if not args.index:
     args.index = 1
-  process_directory(args.input_path, args.output_path, args.color, args.rotate, args.sharpen, args.index)
+  process_directory(args.input_path, args.output_path, args.color, args.rotate, args.sharpen, args.all, args.index)
