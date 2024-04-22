@@ -78,6 +78,9 @@ class Main(QMainWindow, Ui_MainWindow):
   def showFileList(self, imgList):
     """Update the file list on left bottom of the window."""
 
+    if not imgList:
+      return
+
     # Update current photo
     self.currentFileIdx = self.currentFileList.index(imgList[0]) \
       if imgList[0] in self.currentFileList else len(self.currentFileList)
