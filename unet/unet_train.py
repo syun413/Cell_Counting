@@ -25,6 +25,7 @@ image_height = 256
 image_width = 256
 channels = 3
 num_classes = 6
+eval_ratio = 0.2
 
 ## ----- file path ----- #
 
@@ -148,7 +149,7 @@ print(f"Device: {c}")
 
 # 分割數據集
 train_images, valid_images, train_masks, valid_masks = train_test_split(
-    train_images, train_masks, test_size=0.2, random_state=42
+    train_images, train_masks, test_size=eval_ratio, random_state=42
 )
 
 # 使用 `ImageDataGenerator` 來進行訓練和驗證

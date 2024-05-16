@@ -2,6 +2,7 @@ import os
 import numpy as np
 import tifffile as tiff
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from tensorflow.keras.models import load_model
 
 ## ----- Helper Functions ----- ##
@@ -27,6 +28,10 @@ model = load_model("./model/model.h5")
 input_path = "./data/test/"
 output_path = "./results/"
 
+colors = ['black', 'red', 'blue', 'green', 'magenta', 'cyan', 'yellow']  
+# 對應到 ['background', 'red', 'blue', 'green', 'co_rb', 'co_gb', 'co_rg']
+cmap = ListedColormap(colors)
+
 for file in os.listdir(input_path):
   if file.endswith(".tif"):
     tif_path = os.path.join(input_path, file)
@@ -46,11 +51,11 @@ for file in os.listdir(input_path):
     axes[0].set_title('Original Image')
     axes[0].axis('off')  # Hide the axes ticks
 
-    axes[1].imshow(predicted_classes, cmap='jet')
+    axes[1].imshow(predicted_classes, cmap=cmap)
     axes[1].set_title('Predicted Classes')
     axes[1].axis('off')  # Hide the axes ticks
 
-    plt.colorbar(axes[1].imshow(predicted_classes, cmap='jet'), ax=axes[1])
+    plt.colorbar(axes[1].imshow(predicted_classes, cmap=cmap), ax=axes[1])
     result_path = os.path.join(output_path, file).replace('.tif', '.png')
     plt.savefig(result_path)  # Save the figure as a PNG file
     plt.show()
