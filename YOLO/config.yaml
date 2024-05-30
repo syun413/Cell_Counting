@@ -1,0 +1,11 @@
+path: /tmp2/b11902009/yolo/data
+train: images/train
+val: images/val
+
+names:
+  0: red
+  1: green
+  2: blue
+  3: co_rg
+  4: co_gb
+  5: co_rb
