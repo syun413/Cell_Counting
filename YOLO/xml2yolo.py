@@ -42,8 +42,8 @@ def convert_all_xml_to_yolo(xml_dir, output_dir, class_mapping):
         xml_to_yolo(xml_file, output_dir, class_mapping)
 
 # 使用範例
-xml_directory = '/Users/liang/Documents/Medical/DataSet/training_data_20240412/non-empty'  # XML 文件所在目錄
-output_directory = '/Users/liang/Documents/Medical/DataSet/training_data_20240412/yolo'  # YOLO 格式標註文件輸出目錄
+xml_directory = '/Users/liang/Documents/Medical/DataSet/training_data_20240412/augmented_second'  # XML 文件所在目錄
+output_directory = '/Users/liang/Documents/Medical/DataSet/training_data_20240412/yolo/labels'  # YOLO 格式標註文件輸出目錄
 class_mapping = {
     'red': 0,
     'green': 1,

@@ -4,7 +4,7 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 
-model = YOLO("./runs/detect/train6/weights/best.pt")
+model = YOLO("./runs/detect/train2/weights/best.pt")
 input_image_dir = "./data/images/test/"
 label_dir = "./data/labels/test/"
 output_dir = "./result/"
@@ -82,6 +82,11 @@ def add_caption(image, text):
   text_y = image_size + 50
   cv2.putText(image, text, (text_x, text_y), font, font_scale, (0,0,0), 2)
 
+def sharpen_image(image):
+  blur = cv2.GaussianBlur(image, (3, 3), sigmaX=0)
+  mask = np.subtract(image, blur)
+  sharpen = cv2.addWeighted(image, 1.1, mask, 0.1, 0)
+  return sharpen
 
 ## ----- Main ----- ##
 
@@ -93,7 +98,7 @@ for image_name in os.listdir(input_image_dir):
     image = cv2.imread(image_path)
     true_image = image.copy()
 
-    results = model.predict(image, conf=threshold, imgsz=image_size)[0]
+    results = model.predict(sharpen_image(image), conf=threshold, imgsz=image_size)[0]
 
     label_path = os.path.join(label_dir, image_name.replace(".tif", ".txt"))
     true_boxes = read_yolo_labels(label_path)
