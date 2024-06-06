@@ -154,6 +154,20 @@ class Main(QMainWindow, Ui_MainWindow):
       self.currentFileIdx = 0
     self.showPhoto()
 
+  def count_image(self):
+      if self.currentFileIdx < 0:
+          return
+
+      file_path = self.currentFileList[self.currentFileIdx]
+      with open(file_path, 'rb') as f:
+          response = requests.post(
+              'http://127.0.0.1:5000/upload', files={'file': f})
+
+      if response.status_code == 200:
+          result = response.json()
+          self.result.setText(f"Count: {result['count']}")
+      else:
+          self.result.setText("Error in counting")
 
 if __name__ == '__main__':
   import sys
