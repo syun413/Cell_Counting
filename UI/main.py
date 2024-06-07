@@ -113,7 +113,7 @@ class Main(QMainWindow, Ui_MainWindow):
       return
     
     file_path = self.currentFileList[self.currentFileIdx]
-    result_path = find_output_path(file_path, self.savePath, "txt")
+    result_path = find_output_path(file_path, self.savePath, ".txt")
     if os.path.exists(result_path):
       with open(result_path, 'r') as f:
         # Modify here if change file type
