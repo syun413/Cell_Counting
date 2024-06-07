@@ -23,3 +23,12 @@ def scan_all_images(folder_path):
         images.append(path)
   natural_sort(images, key=lambda x: x.lower())
   return images
+
+def find_output_path(input_path, save_path, extension = None):
+  basename = os.path.basename(input_path)
+  name, ext = os.path.splitext(basename)
+  if extension:
+    new_name = f"{name}_predict{extension}"
+  else:
+    new_name = f"{name}_predict{ext}"
+  return os.path.join(save_path, new_name)

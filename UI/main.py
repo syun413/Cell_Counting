@@ -1,9 +1,9 @@
 """ Usage
 Ctrl+O: Open file
 Ctrl+Shift+O: Open directory
-Ctrl+S: Change Save directory (not done)
-N: Next Image (not done)
-P: Previous Image (not done)
+Ctrl+S: Change Save directory
+Right arrow: Next Image 
+Left arrow: Previous Image 
 Ctrl+A: Set API (not done)
 Ctrl+Return: Count (not done)
 Ctrl+W: Clear file list
@@ -17,15 +17,18 @@ from PyQt5.QtCore import QSize
 
 from mainPage_ui import Ui_MainWindow
 from utils import *
+from api import API
 
 class Main(QMainWindow, Ui_MainWindow):
+  ## ----- init ----- ##
   def __init__(self):
     super().__init__()
     self.setupUi(self)
     self.setEvent()
     self.currentFileList = []
     self.currentFileIdx = -1
-    self.savePath = '.'
+    self.api = API()
+    self.showSaveDir(os.path.join(os.path.abspath("."), "predict"))
     self.photoSize = QSize(600, 600)
 
   def setEvent(self):
@@ -33,18 +36,19 @@ class Main(QMainWindow, Ui_MainWindow):
     self.Open.clicked.connect(self.openFile)
     self.OpenDir.setToolTip("Open every photo under a directory and update the save directory for counting result.")
     self.OpenDir.clicked.connect(self.openDir)
-    self.SaveDir.setToolTip("Change the save directory for counting result.")
+    self.SaveDir.setToolTip("Change the save directory for counting result. It will be reset after opening directory.")
     self.SaveDir.clicked.connect(self.changeSaveDir)
     self.NextImg.setToolTip("Show next photo.")
     self.NextImg.clicked.connect(lambda: self.switchCurrentImg(1))
     self.PrevImg.setToolTip("Show previous photo.")
     self.PrevImg.clicked.connect(lambda: self.switchCurrentImg(-1))
     self.SetAPI.setToolTip("Connect to counting model.")
-    self.SetAPI.clicked.connect(lambda: print("Not Done"))
-    self.Count.setToolTip("Count the current photo. May replace old results.")
-    self.Count.clicked.connect(lambda: print("Not Done"))
-    self.CountAll.setToolTip("Count the every photo in file list. May replace old results.")
-    self.CountAll.clicked.connect(lambda: print("Not Done"))
+    self.SetAPI.clicked.connect(self.connectToModel)
+    self.Count.setToolTip("Count the current photo and save result to Save Dir. May replace old results.")
+    self.Count.clicked.connect(self.countImage)
+    self.CountAll.setToolTip("Count the every photo in file list and save result to Save Dir. May replace old results.")
+    self.CountAll.clicked.connect(self.countAllImage)
+    self.showResult.stateChanged.connect(self.showPhoto)
     self.fileList.itemDoubleClicked.connect(self.openFileListItem)
     self.shortcutClear = QShortcut(QKeySequence("Ctrl+W"), self)
     self.shortcutClear.activated.connect(self.clearFileList)
@@ -57,13 +61,20 @@ class Main(QMainWindow, Ui_MainWindow):
     self.shortcutZoomOut = QShortcut(QKeySequence("Ctrl+-"), self)
     self.shortcutZoomOut.activated.connect(self.zoomOut)
 
+  ## ----- show ----- ##
+
   def showPhoto(self):
     """Show the current photo at the middle of the window."""
 
     if self.currentFileIdx < 0 or self.currentFileIdx >= len(self.currentFileList):
       return
     
-    pixmap = QPixmap(self.currentFileList[self.currentFileIdx])
+    file_path = self.currentFileList[self.currentFileIdx]
+    result_path = find_output_path(file_path, self.savePath)
+    if self.showResult.isChecked() and os.path.exists(result_path):
+      pixmap = QPixmap(result_path)
+    else:
+      pixmap = QPixmap(file_path)
     if not pixmap.isNull():
       scaled_pixmap = pixmap.scaled(self.photoSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
       self.photo.setPixmap(scaled_pixmap)
@@ -72,8 +83,8 @@ class Main(QMainWindow, Ui_MainWindow):
       item = self.fileList.item(self.currentFileIdx)
       if item:
         self.fileList.setCurrentItem(item)
-      ## --- TODO --- ##
-      # Show Result if found json
+      
+      self.showPredictResult()
 
   def showFileList(self, imgList):
     """Update the file list on left bottom of the window."""
@@ -91,6 +102,50 @@ class Main(QMainWindow, Ui_MainWindow):
         self.fileList.addItem(item)
         self.currentFileList.append(imgPath)
 
+  def showSaveDir(self, path):
+    self.savePath = path
+    self.saveDirLabel.setText(f"Current Save Dir: {self.savePath}")
+    self.api.Set_Parameter(save_path=path)
+    self.showPhoto()
+
+  def showPredictResult(self):
+    if self.currentFileIdx < 0 or self.currentFileIdx >= len(self.currentFileList):
+      return
+    
+    file_path = self.currentFileList[self.currentFileIdx]
+    result_path = find_output_path(file_path, self.savePath, "txt")
+    if os.path.exists(result_path):
+      with open(result_path, 'r') as f:
+        # Modify here if change file type
+        text = f.read()
+      self.result.setText(text)
+    else:
+      self.result.setText("")
+
+  ## ----- event function ----- ##
+
+  def openFile(self):
+    """Open a single photo."""
+
+    fname, _ = QFileDialog.getOpenFileName(self, "Open File", ".", "All Files (*);;PNG Files (*.png);;JPG Files (*.jpg *.jpeg)")
+    if fname:
+      self.showFileList([fname])
+      self.showPhoto()
+
+  def openDir(self):
+    """Open every photo under a directory and update the save directory for counting result."""
+
+    pname = QFileDialog.getExistingDirectory(self, "Open Directory", ".", QFileDialog.ShowDirsOnly)
+    if pname:
+      self.showSaveDir(os.path.join(pname, "predict"))
+      imgList = scan_all_images(pname)
+      self.showFileList(imgList)
+      self.showPhoto()
+
+  def openFileListItem(self, item=None):
+    self.currentFileIdx = self.currentFileList.index(item.text())
+    self.showPhoto()
+
   def clearFileList(self):
     """Clear the current file list and close photos. Triggered by 'Ctrl+W'."""
 
@@ -98,28 +153,6 @@ class Main(QMainWindow, Ui_MainWindow):
     self.currentFileList.clear()
     self.fileList.clear()
     self.photo.clear()
-
-  def openFile(self):
-    """Open a single photo."""
-
-    self.fname, _ = QFileDialog.getOpenFileName(self, "Open File", ".", "All Files (*);;PNG Files (*.png);;JPG Files (*.jpg *.jpeg)")
-    if self.fname:
-      self.showFileList([self.fname])
-      self.showPhoto()
-
-  def openDir(self):
-    """Open every photo under a directory and update the save directory for counting result."""
-
-    self.pname = QFileDialog.getExistingDirectory(self, "Open Directory", ".", QFileDialog.ShowDirsOnly)
-    if self.pname:
-      self.savePath = self.pname
-      imgList = scan_all_images(self.pname)
-      self.showFileList(imgList)
-      self.showPhoto()
-
-  def openFileListItem(self, item=None):
-    self.currentFileIdx = self.currentFileList.index(item.text())
-    self.showPhoto()
 
   def zoomIn(self):
     """Enlarge the photo. Triggered by 'Ctrl+=' or 'Ctrl++'"""
@@ -138,9 +171,10 @@ class Main(QMainWindow, Ui_MainWindow):
   def changeSaveDir(self):
     """Change save directory for counting result."""
 
-    self.pname = QFileDialog.getExistingDirectory(self, "Open save Directory", ".", QFileDialog.ShowDirsOnly)
-    if self.pname:
-      self.savePath = self.pname
+    pname = QFileDialog.getExistingDirectory(self, "Open save Directory", ".", QFileDialog.ShowDirsOnly)
+    if pname:
+      # self.savePath = pname
+      self.showSaveDir(pname)
 
   def switchCurrentImg(self, shift):
     """Switch showing photo to next one or previous one."""
@@ -154,20 +188,46 @@ class Main(QMainWindow, Ui_MainWindow):
       self.currentFileIdx = 0
     self.showPhoto()
 
-  def count_image(self):
-      if self.currentFileIdx < 0:
-          return
+  ## ----- API ----- ##
 
-      file_path = self.currentFileList[self.currentFileIdx]
-      with open(file_path, 'rb') as f:
-          response = requests.post(
-              'http://127.0.0.1:5000/upload', files={'file': f})
+  def connectToModel(self):
+    fname, _ = QFileDialog.getOpenFileName(self, "Connect to Model", ".", "All Files (*);;YOLO Models (*.pt)")
+    self.api.Set_Parameter(model_path=os.path.abspath(fname))
 
-      if response.status_code == 200:
-          result = response.json()
-          self.result.setText(f"Count: {result['count']}")
-      else:
-          self.result.setText("Error in counting")
+  def countImage(self):
+    if self.currentFileIdx < 0 or self.currentFileIdx >= len(self.currentFileList):
+      return
+    if self.api.model is None:
+      print("Please connect to model before predicting") ## TODO: Show pop-up box
+
+    file_path = self.currentFileList[self.currentFileIdx]
+    self.api.predict_image(file_path)
+    self.showPhoto()
+
+  def countAllImage(self):
+    if self.currentFileIdx < 0 or self.currentFileIdx >= len(self.currentFileList):
+      return
+    if self.api.model is None:
+      print("Please connect to model before predicting") ## TODO: Show pop-up box
+
+    self.api.predict_list(self.currentFileList)
+    self.showPhoto()
+
+  # def count_image(self):
+  #   if self.currentFileIdx < 0:
+  #       return
+
+  #   file_path = self.currentFileList[self.currentFileIdx]
+  #   with open(file_path, 'rb') as f:
+  #       response = requests.post(
+  #           'http://127.0.0.1:5000/upload', files={'file': f})
+
+  #   if response.status_code == 200:
+  #       result = response.json()
+  #       self.result.setText(f"Count: {result['count']}")
+  #   else:
+  #       self.result.setText("Error in counting")
+
 
 if __name__ == '__main__':
   import sys

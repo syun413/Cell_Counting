@@ -37,7 +37,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>776</width>
+         <width>720</width>
          <height>747</height>
         </rect>
        </property>
@@ -103,9 +103,115 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="result">
+      <widget class="QScrollArea" name="SAVEDIR">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="saveDirArea">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>243</width>
+          <height>38</height>
+         </rect>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="saveDirLabel">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Current Save Dir: </string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+     <item>
+      <widget class="QScrollArea" name="RESULT">
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="resultArea">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>243</width>
+          <height>228</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="result">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="showResult">
        <property name="text">
-        <string/>
+        <string>Show Result</string>
        </property>
       </widget>
      </item>
@@ -270,7 +376,7 @@
         <string>Next Img</string>
        </property>
        <property name="shortcut">
-        <string>N</string>
+        <string>Right</string>
        </property>
       </widget>
      </item>
@@ -297,7 +403,7 @@
         <string>Prev Img</string>
        </property>
        <property name="shortcut">
-        <string>P</string>
+        <string>Left</string>
        </property>
       </widget>
      </item>
@@ -321,7 +427,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Set API</string>
+        <string>Model</string>
        </property>
        <property name="shortcut">
         <string>Ctrl+A</string>

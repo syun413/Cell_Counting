@@ -120,7 +120,8 @@ def process_directory(input_path, output_path, color=False, rot=False, sharp=Fal
   """
   Process all .tif under the input directory
   """
-  for file in os.listdir(input_path):
+  files = os.listdir(input_path)
+  for file in files:
     if file.endswith(".tif"):
       tif_path = os.path.join(input_path, file)
       xml_path = tif_path.replace('.tif', '.xml')
